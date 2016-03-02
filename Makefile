@@ -1,7 +1,8 @@
-# Make clean_data directory if it doesn't already exist.
+# Make directory for clean dataset, if it doesn't already exist.
 clean_data:
 	mkdir -p $@
 
+# Clean products, product classes, promotions, and transactions.
 clean_data/product.csv: raw_data/product.csv clean_dataset.py clean_data
 	cat $< | python clean_dataset.py $@
 
