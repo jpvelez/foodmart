@@ -16,25 +16,23 @@ import pandas as pd
 
 def clean_string_col(series):
     '''
-    Attempt to strip apostrophes from any series with string
-    processing methods.
+    Strip apostrophes from string series.
     '''
     try:
         return series.str.replace("'", "")
     except AttributeError:  # Ask forgiveness, not permission.
-        return series
+        return series       # Non-string series.
 
 
 def string_to_float(series):
     '''
-    Attempt to convert string series to float.
-    Only numerical strings should be recast.
+    Convert numerical string series to float.
     '''
-    if series.dtype == np.dtype('O'):
+    if series.dtype == np.dtype('O'):  # Don't cast int columns to float.
         try:
             return series.astype(np.dtype('float64'))
         except ValueError:
-            return series
+            return series              # Non-numerical string series.
     else:
         return series
 
