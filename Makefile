@@ -30,9 +30,26 @@ clean_datasets: clean_data/product.pkl clean_data/product_class.pkl clean_data/p
 # ANALYSIS #
 ############
 # Run sanity check analysis, which lives in a jupyter notebook, and save output to HTML.
-notebooks/sanity_check.html: clean_data/product.pkl clean_data/product_class.pkl clean_data/promotion.pkl clean_data/transactions.pkl notebooks/sanity_check.ipynb
+notebooks/data_quality_analysis.html: clean_data/product.pkl clean_data/product_class.pkl clean_data/promotion.pkl clean_data/transactions.pkl notebooks/data_quality_analysis.ipynb
 	# Assign first 4 input files, the dataset filenames, to DATASET var.
 	$(eval DATASETS='$(wordlist 1, 4, $^)')
 	# Execute notebook cells with datasets as input, and send HTML output to stdout.
   # Dataset filenames are passed to notebook using temp env var `datasets`.
-	datasets=$(DATASETS) jupyter nbconvert --execute notebooks/sanity_check.ipynb --to html --stdout > $@
+	datasets=$(DATASETS) jupyter nbconvert --execute notebooks/data_quality_analysis.ipynb --to html --stdout > $@
+
+# Run complete analysis notebook for question one, save output to HTML.
+notebooks/question_one.html: clean_data/product.pkl clean_data/product_class.pkl clean_data/promotion.pkl clean_data/transactions.pkl notebooks/question_one.ipynb
+	$(eval DATASETS='$(wordlist 1, 4, $^)')
+	datasets=$(DATASETS) jupyter nbconvert --execute notebooks/question_one.ipynb --to html --stdout > $@
+
+# Run complete analysis notebook for question two, save output to HTML.
+notebooks/question_two.html: clean_data/product.pkl clean_data/product_class.pkl clean_data/promotion.pkl clean_data/transactions.pkl notebooks/question_one.ipynb
+	$(eval DATASETS='$(wordlist 1, 4, $^)')
+	datasets=$(DATASETS) jupyter nbconvert --execute notebooks/question_two.ipynb --to html --stdout > $@
+
+# Run executive summary notebook, save output to HTML.
+notebooks/executive_summary.html: notebooks/question_one.html notebooks/question_two.html
+	jupyter nbconvert --execute notebooks/executive_summary.ipynb --to html --stdout > $@
+
+.PHONY: all_analyses
+all_analyses: notebooks/data_quality_analysis.html notebooks/question_one.html notebooks/question_two.html notebooks/executive_summary.html
