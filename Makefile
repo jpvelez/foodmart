@@ -6,7 +6,10 @@ clean_data:
 	mkdir -p $@
 
 # Clean products, product classes, promotions, and transactions.
+# All cleaning tasks use the same generic python script.
 clean_data/product.pkl: raw_data/product.csv clean_dataset.py clean_data
+	# '$<' is a special variable that stands for "1st input file".
+	# '$@' is a special variable that stands for "the output file".
 	cat $< | python clean_dataset.py $@
 
 clean_data/product_class.pkl: raw_data/product_class.csv clean_dataset.py clean_data
@@ -14,6 +17,7 @@ clean_data/product_class.pkl: raw_data/product_class.csv clean_dataset.py clean_
 
 clean_data/promotion.pkl: raw_data/promotion.csv clean_dataset.py clean_data
 	# Clean up media_type values. Use sed to replace ', ' with pipes after line 1.
+	# promotions must be cleaned thru sed before being piped to cleaning script, or it will break.
 	# Note: make interprets '$' as a variable, '$$' makes sed filter work correctly.
 	cat $< | sed -e '2,$$ s/, / | /g' | python clean_dataset.py $@
 
@@ -22,17 +26,17 @@ clean_data/transactions.pkl: raw_data/transactions.csv clean_dataset.py clean_da
 	cat $< | sed 's/1);/1/g' | python clean_dataset.py $@
 
 # Clean all datasets, if they haven't been cleaned already.
-.PHONY: clean_datasets
+.PHONY: clean_datasets  # This just tells Make that clean_dataset is a "phony" target - no output is produced.
 clean_datasets: clean_data/product.pkl clean_data/product_class.pkl clean_data/promotion.pkl clean_data/transactions.pkl
 
 
 ############
 # ANALYSIS #
 ############
-# Run sanity check analysis, which lives in a jupyter notebook, and save output to HTML.
+# Run data quality analysis, which lives in a jupyter notebook, and save output to HTML.
 notebooks/data_quality_analysis.html: clean_data/product.pkl clean_data/product_class.pkl clean_data/promotion.pkl clean_data/transactions.pkl notebooks/data_quality_analysis.ipynb
 	# Assign first 4 input files, the dataset filenames, to DATASET var.
-	$(eval DATASETS='$(wordlist 1, 4, $^)')
+	$(eval DATASETS='$(wordlist 1, 4, $^)')  # eval and wordlist are Make functions. '$^' is var for 'all input files'.
 	# Execute notebook cells with datasets as input, and send HTML output to stdout.
   # Dataset filenames are passed to notebook using temp env var `datasets`.
 	datasets=$(DATASETS) jupyter nbconvert --execute notebooks/data_quality_analysis.ipynb --to html --stdout > $@
